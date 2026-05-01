@@ -151,6 +151,62 @@ After seeding, use these to log in:
 
 ---
 
+## 🗄️ Entity Relationship Diagram
+
+```
+┌─────────────┐        ┌──────────────────┐        ┌─────────────┐
+│    User     │        │  ProjectMember   │        │   Project   │
+│─────────────│        │──────────────────│        │─────────────│
+│ id (PK)     │1      *│ id (PK)          │*      1│ id (PK)     │
+│ name        │────────│ userId (FK)      │────────│ name        │
+│ email       │        │ projectId (FK)   │        │ description │
+│ password    │        │ role             │        │ ownerId(FK) │──┐
+│ createdAt   │        │ joinedAt         │        │ createdAt   │  │
+│ updatedAt   │        └──────────────────┘        │ updatedAt   │  │
+└──────┬──────┘                                    └──────┬──────┘  │
+       │ 1                                                │ 1       │
+       │ (creatorId)                                      │         │
+       │ (assigneeId, nullable)                           │ *       │
+       │ *                                         ┌──────┴──────┐  │
+       └───────────────────────────────────────────│    Task     │  │
+                                                   │─────────────│  │
+                                                   │ id (PK)     │  │
+                                                   │ title       │  │
+                                                   │ description │  │
+                                                   │ status      │  │
+                                                   │ priority    │  │
+                                                   │ dueDate     │  │
+                                                   │ projectId(FK│  │
+                                                   │ creatorId(FK│  │
+                                                   │ assigneeId  │  │
+                                                   │ createdAt   │  │
+                                                   │ updatedAt   │  │
+                                                   └─────────────┘  │
+       ┌─────────────────────────────────────────────────────────────┘
+       │ User.id ← Project.ownerId  (one user owns many projects)
+```
+
+### Relationships
+
+| From | To | Type | Key | On Delete |
+|---|---|---|---|---|
+| User | Project | One-to-Many | `Project.ownerId` | RESTRICT |
+| User | ProjectMember | One-to-Many | `ProjectMember.userId` | CASCADE |
+| Project | ProjectMember | One-to-Many | `ProjectMember.projectId` | CASCADE |
+| Project | Task | One-to-Many | `Task.projectId` | CASCADE |
+| User | Task (creator) | One-to-Many | `Task.creatorId` | RESTRICT |
+| User | Task (assignee) | One-to-Many | `Task.assigneeId` | SET NULL |
+
+### Enums
+
+| Table | Column | Values |
+|---|---|---|
+| ProjectMember | role | `ADMIN`, `MEMBER` |
+| Task | status | `TODO`, `IN_PROGRESS`, `DONE` |
+| Task | priority | `LOW`, `MEDIUM`, `HIGH` |
+
+---
+
 ## 📁 Project Structure
 
 ```
