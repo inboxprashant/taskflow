@@ -1,26 +1,16 @@
-# ── Stage 1: Build ──────────────────────────────────────
+# ── Stage 1: Build React app ─────────────────────────────────
 FROM node:20-alpine AS builder
-
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
-
 COPY . .
 RUN npm run build
 
-# ── Stage 2: Serve with Nginx ────────────────────────────
+# ── Stage 2: Serve with Nginx ─────────────────────────────────
 FROM nginx:alpine
-
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copy our custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/app.conf
-
-# Copy built React app from builder stage
+RUN rm -f /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
-
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/start.sh"]
