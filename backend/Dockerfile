@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Install prisma as it's needed at runtime for generate
-RUN npm install prisma --save-dev
+RUN npm install prisma@5 --save-dev
 
 # Copy prisma schema and generate client
 COPY prisma ./prisma
