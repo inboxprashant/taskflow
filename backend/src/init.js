@@ -44,6 +44,13 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Fix existing tables that may be missing DEFAULT values (from old Prisma schema)
+    await conn.query(`
+      ALTER TABLE User
+        MODIFY COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        MODIFY COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `).catch(() => {});
+
     // ── Project ───────────────────────────────────────────────
     // Relation: User 1──< Project  (ownerId → User.id)
     await conn.query(`
@@ -60,10 +67,13 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    await conn.query(`
+      ALTER TABLE Project
+        MODIFY COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        MODIFY COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `).catch(() => {});
+
     // ── ProjectMember ─────────────────────────────────────────
-    // Relation: User >──< Project  (many-to-many junction)
-    // userId    → User.id    (CASCADE delete: remove memberships when user deleted)
-    // projectId → Project.id (CASCADE delete: remove memberships when project deleted)
     await conn.query(`
       CREATE TABLE IF NOT EXISTS ProjectMember (
         id        INT      AUTO_INCREMENT PRIMARY KEY,
@@ -80,9 +90,6 @@ async function initDB() {
     `);
 
     // ── Task ──────────────────────────────────────────────────
-    // Relation: Project 1──< Task  (projectId → Project.id, CASCADE)
-    // Relation: User 1──< Task     (creatorId → User.id, RESTRICT)
-    // Relation: User 1──< Task     (assigneeId → User.id, SET NULL — optional)
     await conn.query(`
       CREATE TABLE IF NOT EXISTS Task (
         id          INT      AUTO_INCREMENT PRIMARY KEY,
@@ -104,6 +111,12 @@ async function initDB() {
           FOREIGN KEY (assigneeId) REFERENCES User(id)    ON DELETE SET NULL ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+
+    await conn.query(`
+      ALTER TABLE Task
+        MODIFY COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        MODIFY COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `).catch(() => {});
 
     console.log('✅ Database tables ready');
   } finally {
