@@ -20,7 +20,11 @@ export default function LoginPage() {
       await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const msg = err.response?.data?.message
+        || err.message
+        || 'Login failed. Please try again.';
+      setError(msg);
+      console.error('Login error:', err.response?.status, err.response?.data, err.message);
     } finally {
       setLoading(false);
     }
