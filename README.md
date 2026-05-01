@@ -2,36 +2,40 @@
 
 > A full-stack web app for managing team projects and tasks with role-based access control.
 
-![Made with React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb?style=flat-square&logo=react)
-![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=flat-square&logo=node.js)
-![MySQL](https://img.shields.io/badge/Database-MySQL%20%2B%20Prisma-4479a1?style=flat-square&logo=mysql)
-![Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?style=flat-square&logo=railway)
+![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb?style=flat-square&logo=react)
+![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=flat-square&logo=node.js)
+![Database](https://img.shields.io/badge/Database-MySQL%208-4479a1?style=flat-square&logo=mysql)
+![Auth](https://img.shields.io/badge/Auth-JWT-orange?style=flat-square&logo=jsonwebtokens)
+![Deployed](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?style=flat-square&logo=railway)
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED?style=flat-square&logo=docker)
 
 ---
 
 ## ✨ Features
 
-- 🔐 **Authentication** — Signup & Login with JWT
-- 📁 **Project Management** — Create, update, delete projects
-- 👥 **Team Members** — Invite members with Admin / Member roles
+- 🔐 **Authentication** — Signup & Login with JWT tokens
+- 📁 **Project Management** — Create, update and delete projects
+- 👥 **Team Members** — Invite members by email with Admin / Member roles
 - ✅ **Task Tracking** — Create, assign & track tasks (To Do / In Progress / Done)
-- 🎯 **Priority Levels** — Low / Medium / High per task
-- 📊 **Dashboard** — Stats, overdue tasks, and tasks assigned to you
-- 🔒 **Role-Based Access** — Admins manage everything, Members update task status
+- 🎯 **Priority Levels** — Low / Medium / High per task with due dates
+- 📊 **Dashboard** — Live stats, overdue tasks, and tasks assigned to you
+- 🔒 **Role-Based Access** — Admins manage tasks & members, Members update status
 - 📱 **Responsive UI** — Works on desktop and mobile
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer      | Technology                  |
-|------------|-----------------------------|
-| Frontend   | React 18, Vite, React Router |
-| Backend    | Node.js, Express.js          |
-| Database   | MySQL 8, Prisma ORM          |
-| Auth       | JWT (JSON Web Tokens)        |
-| Deployment | Railway                      |
-| Container  | Docker + Docker Compose      |
+| Layer      | Technology                        |
+|------------|-----------------------------------|
+| Frontend   | React 18, Vite, React Router v6   |
+| Backend    | Node.js, Express.js               |
+| Database   | MySQL 8 (raw `mysql2` — no ORM)   |
+| Auth       | JWT (JSON Web Tokens)             |
+| Deployment | Railway (free tier)               |
+| Container  | Docker + Nginx (frontend proxy)   |
+
+> **No ORM** — uses raw `mysql2` queries with direct foreign key relationships. Tables are auto-created on first startup via `init.js`.
 
 ---
 
@@ -57,15 +61,21 @@ npm install
 # Configure environment
 cp .env.example .env
 # Edit .env — set your MySQL credentials and JWT secret
+```
 
-# Run migrations
-npx prisma migrate dev --name init
+Your `.env` should look like:
+```env
+DATABASE_URL="mysql://root:yourpassword@localhost:3306/team_task_manager"
+JWT_SECRET="your_secret_key_here"
+PORT=5000
+```
+
+```bash
+# Start dev server (auto-creates tables on first run)
+npm run dev
 
 # Seed demo data
 npm run db:seed
-
-# Start dev server
-npm run dev
 ```
 
 ### 3. Frontend setup
@@ -103,21 +113,40 @@ Open `http://localhost`
 
 ## ☁️ Deploy on Railway (Free)
 
-See the full guide → **[RAILWAY_DEPLOY.md](./RAILWAY_DEPLOY.md)**
+### Architecture on Railway
+```
+Browser → Frontend (Nginx + Docker)
+              ├── /          → React SPA
+              └── /api/*     → proxied to Backend service
+                                    └── MySQL service
+```
 
-**Quick steps:**
+### Steps
+
 1. Push this repo to GitHub
-2. Go to [railway.app](https://railway.app) → New Project
-3. Add **MySQL** service
-4. Add **backend** service (root dir: `backend`) → set `DATABASE_URL`, `JWT_SECRET`
-5. Add **frontend** service (root dir: `frontend`) → set `VITE_API_URL`
-6. Done ✅
+2. Go to [railway.app](https://railway.app) → **New Project**
+3. Add **MySQL** service → copy the `MYSQL_URL`
+4. Add **backend** service → root dir: `backend` → set variables:
+
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | paste `MYSQL_URL` from MySQL service |
+   | `JWT_SECRET` | any long random string |
+
+5. Add **frontend** service → root dir: `frontend` → set variables:
+
+   | Key | Value |
+   |---|---|
+   | `BACKEND_URL` | your backend Railway URL (no `/api` at end) |
+
+6. Seed demo data — backend service → **Run command**: `node src/seed.js`
+7. Done ✅
+
+> Full guide → **[RAILWAY_DEPLOY.md](./RAILWAY_DEPLOY.md)**
 
 ---
 
 ## 👤 Demo Accounts
-
-After seeding, use these to log in:
 
 | Role   | Email              | Password     |
 |--------|--------------------|--------------|
@@ -129,25 +158,25 @@ After seeding, use these to log in:
 
 ## 📡 API Endpoints
 
-| Method | Endpoint                        | Description           | Access  |
-|--------|---------------------------------|-----------------------|---------|
-| POST   | /api/auth/signup                | Register              | Public  |
-| POST   | /api/auth/login                 | Login                 | Public  |
-| GET    | /api/auth/me                    | Current user          | Auth    |
-| GET    | /api/projects                   | List my projects      | Auth    |
-| POST   | /api/projects                   | Create project        | Auth    |
-| GET    | /api/projects/:id               | Project details       | Member  |
-| PUT    | /api/projects/:id               | Update project        | Admin   |
-| DELETE | /api/projects/:id               | Delete project        | Admin   |
-| GET    | /api/tasks/:projectId           | List tasks            | Member  |
-| POST   | /api/tasks/:projectId           | Create task           | Admin   |
-| PUT    | /api/tasks/:projectId/:taskId   | Update task           | Member  |
-| DELETE | /api/tasks/:projectId/:taskId   | Delete task           | Admin   |
-| GET    | /api/members/:projectId         | List members          | Member  |
-| POST   | /api/members/:projectId         | Add member            | Admin   |
-| PUT    | /api/members/:projectId/:userId | Update member role    | Admin   |
-| DELETE | /api/members/:projectId/:userId | Remove member         | Admin   |
-| GET    | /api/dashboard                  | Dashboard stats       | Auth    |
+| Method | Endpoint                          | Description           | Access  |
+|--------|-----------------------------------|-----------------------|---------|
+| POST   | `/api/auth/signup`                | Register              | Public  |
+| POST   | `/api/auth/login`                 | Login                 | Public  |
+| GET    | `/api/auth/me`                    | Current user          | Auth    |
+| GET    | `/api/projects`                   | List my projects      | Auth    |
+| POST   | `/api/projects`                   | Create project        | Auth    |
+| GET    | `/api/projects/:id`               | Project details       | Member  |
+| PUT    | `/api/projects/:id`               | Update project        | Admin   |
+| DELETE | `/api/projects/:id`               | Delete project        | Admin   |
+| GET    | `/api/tasks/:projectId`           | List tasks            | Member  |
+| POST   | `/api/tasks/:projectId`           | Create task           | Admin   |
+| PUT    | `/api/tasks/:projectId/:taskId`   | Update task           | Member  |
+| DELETE | `/api/tasks/:projectId/:taskId`   | Delete task           | Admin   |
+| GET    | `/api/members/:projectId`         | List members          | Member  |
+| POST   | `/api/members/:projectId`         | Add member            | Admin   |
+| PUT    | `/api/members/:projectId/:userId` | Update member role    | Admin   |
+| DELETE | `/api/members/:projectId/:userId` | Remove member         | Admin   |
+| GET    | `/api/dashboard`                  | Dashboard stats       | Auth    |
 
 ---
 
@@ -165,8 +194,7 @@ After seeding, use these to log in:
 │ updatedAt   │        └──────────────────┘        │ updatedAt   │  │
 └──────┬──────┘                                    └──────┬──────┘  │
        │ 1                                                │ 1       │
-       │ (creatorId)                                      │         │
-       │ (assigneeId, nullable)                           │ *       │
+       │ (creatorId / assigneeId)                         │ *       │
        │ *                                         ┌──────┴──────┐  │
        └───────────────────────────────────────────│    Task     │  │
                                                    │─────────────│  │
@@ -182,13 +210,12 @@ After seeding, use these to log in:
                                                    │ createdAt   │  │
                                                    │ updatedAt   │  │
                                                    └─────────────┘  │
-       ┌─────────────────────────────────────────────────────────────┘
-       │ User.id ← Project.ownerId  (one user owns many projects)
+       └─────────────────────────────────────────────────────────────┘
 ```
 
-### Relationships
+### Relationships & Cascade Rules
 
-| From | To | Type | Key | On Delete |
+| From | To | Type | Foreign Key | On Delete |
 |---|---|---|---|---|
 | User | Project | One-to-Many | `Project.ownerId` | RESTRICT |
 | User | ProjectMember | One-to-Many | `ProjectMember.userId` | CASCADE |
@@ -201,9 +228,9 @@ After seeding, use these to log in:
 
 | Table | Column | Values |
 |---|---|---|
-| ProjectMember | role | `ADMIN`, `MEMBER` |
-| Task | status | `TODO`, `IN_PROGRESS`, `DONE` |
-| Task | priority | `LOW`, `MEDIUM`, `HIGH` |
+| `ProjectMember` | `role` | `ADMIN`, `MEMBER` |
+| `Task` | `status` | `TODO`, `IN_PROGRESS`, `DONE` |
+| `Task` | `priority` | `LOW`, `MEDIUM`, `HIGH` |
 
 ---
 
@@ -211,23 +238,26 @@ After seeding, use these to log in:
 
 ```
 taskflow/
-├── docker-compose.yml
-├── .env.example
-├── RAILWAY_DEPLOY.md
+├── docker-compose.yml           # Local Docker setup
+├── .env.example                 # Root env template for Docker
+├── RAILWAY_DEPLOY.md            # Full Railway deploy guide
 │
 ├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma        # DB schema (User, Project, Task, Member)
 │   ├── src/
-│   │   ├── middleware/auth.js   # JWT + role guards
-│   │   ├── routes/
-│   │   │   ├── auth.js
-│   │   │   ├── projects.js
-│   │   │   ├── tasks.js
-│   │   │   ├── members.js
-│   │   │   └── dashboard.js
+│   │   ├── db.js                # mysql2 connection pool
+│   │   ├── init.js              # Auto-creates tables on startup
+│   │   ├── schema.sql           # SQL schema reference
+│   │   ├── seed.js              # Demo data seeder
 │   │   ├── index.js             # Express entry point
-│   │   └── seed.js              # Demo data seeder
+│   │   ├── middleware/
+│   │   │   └── auth.js          # JWT + role guards
+│   │   └── routes/
+│   │       ├── auth.js
+│   │       ├── projects.js
+│   │       ├── tasks.js
+│   │       ├── members.js
+│   │       └── dashboard.js
+│   ├── .env.example
 │   ├── Dockerfile
 │   └── railway.toml
 │
@@ -245,9 +275,10 @@ taskflow/
     │       ├── DashboardPage.jsx
     │       ├── ProjectsPage.jsx
     │       └── ProjectDetailPage.jsx
-    ├── Dockerfile
-    ├── nginx.conf
-    ├── serve.json
+    ├── Dockerfile               # Nginx + React build
+    ├── nginx.conf               # Proxies /api → backend
+    ├── start.sh                 # Injects env vars into nginx at runtime
+    ├── serve.json               # SPA routing fallback
     └── railway.toml
 ```
 
