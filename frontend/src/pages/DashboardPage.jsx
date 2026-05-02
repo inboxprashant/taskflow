@@ -52,7 +52,7 @@ export default function DashboardPage() {
     </div>
   );
 
-  if (error || !data) return (
+  if (error || !data || !data.stats) return (
     <div className="dashboard">
       <div className="page-header">
         <div>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
     </div>
   );
 
-  const { stats, recentAssignedTasks, overdueTasksList } = data;
+  const { stats, recentAssignedTasks = [], overdueTasksList = [] } = data;
 
   return (
     <div className="dashboard">
