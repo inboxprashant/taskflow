@@ -63,7 +63,11 @@ export default function DashboardPage() {
       <div className="card" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
         <h3 style={{ marginBottom: 8, color: 'var(--text)' }}>Could not load dashboard data</h3>
-        <p style={{ marginBottom: 16 }}>{error || 'API is unreachable. Check your backend connection.'}</p>
+        <p style={{ marginBottom: 8 }}>{error || 'API is unreachable.'}</p>
+        <p style={{ marginBottom: 16, fontSize: 12, background: '#f1f5f9', padding: '6px 12px', borderRadius: 6, display: 'inline-block' }}>
+          API URL: <code>{import.meta.env.VITE_API_URL || '/api (fallback)'}</code>
+        </p>
+        <br />
         <button className="btn btn-primary" onClick={() => window.location.reload()}>
           Retry
         </button>
