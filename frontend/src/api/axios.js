@@ -13,11 +13,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Only redirect to login on 401 for non-auth endpoints
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || '';
+    const is401 = error.response?.status === 401;
+    const isAuthCheck = url.includes('/auth/me');
+
+    // Don't redirect if it's the /auth/me check — AuthContext handles that
+    if (is401 && !isAuthCheck) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
