@@ -33,11 +33,15 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/dashboard')
       .then((res) => setData(res.data))
-      .catch(console.error)
+      .catch((err) => {
+        console.error('Dashboard error:', err);
+        setError(err.message || 'Failed to load dashboard');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,6 +49,25 @@ export default function DashboardPage() {
     <div className="page-loader">
       <div className="spinner spinner-dark" />
       <span>Loading dashboard…</span>
+    </div>
+  );
+
+  if (error || !data) return (
+    <div className="dashboard">
+      <div className="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="page-subtitle">Welcome back, <strong>{user?.name}</strong> 👋</p>
+        </div>
+      </div>
+      <div className="card" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+        <h3 style={{ marginBottom: 8, color: 'var(--text)' }}>Could not load dashboard data</h3>
+        <p style={{ marginBottom: 16 }}>{error || 'API is unreachable. Check your backend connection.'}</p>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+          Retry
+        </button>
+      </div>
     </div>
   );
 
